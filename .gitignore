@@ -1,0 +1,6 @@
+# OpenFOAM temporary and compiled fields
+dynamicCode/
+platforms/
+postProcessing/
+*.log
+.tags

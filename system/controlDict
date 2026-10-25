@@ -1,0 +1,87 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     pimpleFoam;
+
+startFrom       latestTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         0.3;
+
+deltaT          0.0001;
+
+writeControl    adjustable;
+
+writeInterval   0.01;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable yes;
+
+adjustTimeStep  yes;
+
+maxCo           5;
+
+functions
+{
+    p_total
+    {
+        type             coded;
+        libs            (utilityFunctionObjects);
+        name            p_total;
+        executeControl  timeStep;
+        executeInterval 1;
+        writeControl    writeTime;
+
+        codeWrite
+        #{
+            // 1. Read fields p and U from the mesh database
+            const volScalarField& p = mesh().lookupObject<volScalarField>("p");
+            const volVectorField& U = mesh().lookupObject<volVectorField>("U");
+            //2 & 3. Create the field using IOobject and compute: p_total = p +0.5 * U^2
+            // Note: For incompressible solvers like simpleFoam,pressure is p/rho (m^2/s^2)
+            volScalarField p_total
+            (
+                IOobject
+                (
+                    "p_total",
+                    mesh().time().timeName(),
+                    mesh(),
+                    IOobject::NO_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                p + 0.5 * magSqr(U)
+            );
+            // 4. Write the P_total field to disk
+            p_total.write();
+        #};
+    }
+}
+
+// ************************************************************************* //
